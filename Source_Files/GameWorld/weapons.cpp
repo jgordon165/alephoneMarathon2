@@ -111,6 +111,7 @@ Apr 10, 2003 (Woody Zenfell):
 #include <string.h>
 #include <stdlib.h>
 #include <limits.h>
+#include <vector>
 
 #include "weapon_definitions.h"
 
@@ -4321,9 +4322,14 @@ inline void TrigDefDataToStream(uint8* &S, trigger_definition& Object)
 }
 
 
+static void apply_mml_weapon_overrides();
+
 uint8 *unpack_weapon_definition(uint8 *Stream, size_t Count)
 {
-	return unpack_weapon_definition(Stream,weapon_definitions,Count);
+	uint8 *result = unpack_weapon_definition(Stream,weapon_definitions,Count);
+	// physics just replaced the weapon definitions; reapply MML tuning
+	apply_mml_weapon_overrides();
+	return result;
 }
 
 uint8 *unpack_weapon_definition(uint8 *Stream, weapon_definition *Objects, size_t Count)
@@ -4569,6 +4575,7 @@ uint8 *pack_weapon_definition(uint8 *Stream, weapon_definition *Objects, size_t 
 void init_weapon_definitions()
 {
 	memcpy(weapon_definitions, original_weapon_definitions, sizeof(weapon_definitions));
+	apply_mml_weapon_overrides();
 }
 
 // LP additions: get weapon-definition size and number of weapon types
@@ -4579,8 +4586,48 @@ struct shell_casing_definition *original_shell_casing_definitions = NULL;
 int16 *original_weapon_ordering_array = NULL;
 std::vector<WeaponConstant> original_weapon_constants;
 
+// MML <trigger> tuning. Weapon definitions come from the physics model,
+// which is loaded after MML and on every level change, so the tuning is
+// kept here and applied each time the definitions are (re)loaded.
+// Unset fields are NONE_SET and leave the physics value alone.
+namespace {
+const int16 NONE_SET = INT16_MIN;
+struct TriggerOverride {
+	int16 weapon, trigger;
+	int16 rounds_per_magazine = NONE_SET;
+	int16 ticks_per_round = NONE_SET;
+	int16 recovery_ticks = NONE_SET;
+	int16 charging_ticks = NONE_SET;
+	int16 recoil_magnitude = NONE_SET;
+	int16 projectile_type = NONE_SET;
+	int16 theta_error = NONE_SET;
+	int16 burst_count = NONE_SET;
+};
+std::vector<TriggerOverride> trigger_overrides;
+}
+
+static void apply_mml_weapon_overrides()
+{
+	for (const auto& o : trigger_overrides)
+	{
+		trigger_definition& t = weapon_definitions[o.weapon].weapons_by_trigger[o.trigger];
+		if (o.rounds_per_magazine != NONE_SET) t.rounds_per_magazine = o.rounds_per_magazine;
+		if (o.ticks_per_round != NONE_SET) t.ticks_per_round = o.ticks_per_round;
+		if (o.recovery_ticks != NONE_SET) t.recovery_ticks = o.recovery_ticks;
+		if (o.charging_ticks != NONE_SET) t.charging_ticks = o.charging_ticks;
+		if (o.recoil_magnitude != NONE_SET) t.recoil_magnitude = o.recoil_magnitude;
+		if (o.projectile_type != NONE_SET) t.projectile_type = o.projectile_type;
+		if (o.theta_error != NONE_SET) t.theta_error = o.theta_error;
+		if (o.burst_count != NONE_SET) t.burst_count = o.burst_count;
+	}
+}
+
 void reset_mml_weapons()
 {
+	// Definitions already tuned stay so until the physics model is next
+	// loaded, which happens on every new game and level.
+	trigger_overrides.clear();
+
 	if (original_shell_casing_definitions) {
 		for (unsigned i = 0; i < NUMBER_OF_SHELL_CASING_TYPES; i++)
 			shell_casing_definitions[i] = original_shell_casing_definitions[i];
@@ -4665,4 +4712,28 @@ void parse_mml_weapons(const InfoTree& root)
 		weapon.read_indexed("shorted_sound", def.shorted_sound, INT16_MAX + 1, true);
 		weapon.read_angle("flailing_bonus", def.flailing_bonus);
 	}
+
+	// <trigger weapon="4" which="0" rounds_per_magazine="36" .../>
+	// which: 0 = primary, 1 = secondary.
+	for (const InfoTree& trigger : root.children_named("trigger"))
+	{
+		TriggerOverride o;
+		if (!trigger.read_indexed("weapon", o.weapon, NUMBER_OF_WEAPONS) ||
+			!trigger.read_indexed("which", o.trigger, NUMBER_OF_TRIGGERS))
+			continue;
+
+		int16 value;
+		if (trigger.read_attr_bounded<int16>("rounds_per_magazine", value, 1, INT16_MAX)) o.rounds_per_magazine = value;
+		// NONE (-1) = derive from the firing animation, as the physics model allows
+		if (trigger.read_attr_bounded<int16>("ticks_per_round", value, NONE, INT16_MAX)) o.ticks_per_round = value;
+		if (trigger.read_attr_bounded<int16>("recovery_ticks", value, 0, INT16_MAX)) o.recovery_ticks = value;
+		if (trigger.read_attr_bounded<int16>("charging_ticks", value, 0, INT16_MAX)) o.charging_ticks = value;
+		if (trigger.read_attr_bounded<int16>("recoil", value, 0, INT16_MAX)) o.recoil_magnitude = value;
+		if (trigger.read_indexed("projectile", value, NUMBER_OF_PROJECTILE_TYPES)) o.projectile_type = value;
+		if (trigger.read_attr_bounded<int16>("theta_error", value, 0, INT16_MAX)) o.theta_error = value;
+		if (trigger.read_attr_bounded<int16>("burst_count", value, 0, INT16_MAX)) o.burst_count = value;
+
+		trigger_overrides.push_back(o);
+	}
+	apply_mml_weapon_overrides();
 }
