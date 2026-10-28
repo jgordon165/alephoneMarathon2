@@ -1,0 +1,39 @@
+<marathon>
+  <!--
+    Vanguard Arsenal: weapon tuning.
+    <trigger> needs an Aleph One build with MML trigger tuning
+    (halo_esque branch). Weapon indexes: 2 = fusion pistol slot,
+    3 = assault rifle slot. which: 0 = primary, 1 = secondary.
+    Projectile 2 = pistol bullet (heavier hitting than the rifle bullet).
+  -->
+  <weapons>
+    <!-- Burst rifle: 36-round magazine, rounds 2 ticks apart, tight
+         spread, light recoil. vanguard.lua turns trigger pulls into
+         3-round bursts with a short delay between them. -->
+    <trigger weapon="3" which="0" rounds_per_magazine="36" ticks_per_round="2"
+             recovery_ticks="0" theta_error="2" recoil="3" projectile="2"/>
+
+    <!-- Plasma pistol: semi-automatic, fires as fast as you click; a
+         40-shot battery. Heat is handled by vanguard.lua. The charged
+         shot (secondary) charges in 2/3 of a second. -->
+    <trigger weapon="2" which="0" rounds_per_magazine="40" ticks_per_round="3"
+             recovery_ticks="2"/>
+    <trigger weapon="2" which="1" rounds_per_magazine="40" charging_ticks="20"/>
+  </weapons>
+
+  <!-- Weapon names on the HUD panel (string set 137, by weapon slot) -->
+  <stringset index="137">
+    <string index="2">PLASMA PISTOL</string>
+    <string index="3">VANGUARD BURST RIFLE/GRENADE LAUNCHER</string>
+  </stringset>
+
+  <!-- Inventory and pickup names (string set 150 = item names) -->
+  <stringset index="150">
+    <string index="5">Plasma Pistol</string>
+    <string index="6">Plasma Battery</string>
+    <string index="7">Plasma Batteries</string>
+    <string index="8">Vanguard Burst Rifle</string>
+    <string index="9">Burst Rifle Magazine</string>
+    <string index="10">Burst Rifle Magazines</string>
+  </stringset>
+</marathon>

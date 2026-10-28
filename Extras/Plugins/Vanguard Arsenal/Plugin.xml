@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<plugin name="Vanguard Arsenal"
+        description="Burst rifle and overheating plasma pistol, with original art"
+        version="1.0">
+  <mml file="Vanguard Arsenal.mml"/>
+  <solo_lua file="vanguard.lua"/>
+  <shapes_patch file="vanguard_weapons.shpp"/>
+  <scenario name="Marathon 2"/>
+</plugin>
