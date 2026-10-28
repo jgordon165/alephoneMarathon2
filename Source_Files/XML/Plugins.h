@@ -40,7 +40,7 @@ struct ScenarioInfo {
 	std::string version;
 };
 struct ShapesPatch {
-	bool requires_opengl;
+	bool requires_opengl = false;	// unset attribute means the patch works everywhere
 	std::string path;
 };
 
