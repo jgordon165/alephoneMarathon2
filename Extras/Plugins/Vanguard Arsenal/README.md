@@ -14,8 +14,11 @@ Mouse-wheel weapon switching works as usual.
 
 ## Installing
 
-1. Copy this whole `Vanguard Arsenal` folder into the `Plugins` folder of
-   your Marathon 2 data (next to `Basic HUD`, `Enhanced HUD`, and so on).
+Release downloads for Marathon 2 (and the engine-only Aleph One download)
+include this plugin under `Extras/Plugins/Vanguard Arsenal`.
+
+1. Copy that `Vanguard Arsenal` folder into the `Plugins` folder of your
+   Marathon 2 data (next to `Basic HUD`, `Enhanced HUD`, and so on).
 2. In Aleph One go to **Preferences → Environment → Plugins** and make sure
    **Vanguard Arsenal** is enabled. Turn it off there to get the original
    weapons back.

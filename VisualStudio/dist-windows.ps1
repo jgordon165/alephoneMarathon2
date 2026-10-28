@@ -28,6 +28,63 @@ function GetCommonFiles() {
 	Copy-Item (Join-Path -Path $root_directory -ChildPath "/Resources/Library Licenses") -Destination (Join-Path -Path $output_package_folder -ChildPath "/docs") -Recurse -Exclude $array_exclude_copy
 }
 
+# Copies the optional plugins in Extras/Plugins into this package's
+# Extras/Plugins folder. Each plugin's Plugin.xml picks the games:
+# <scenario name="Marathon 2"/> sends it to the Marathon2 package, and so on.
+# Plugins without <scenario> tags go to every package, and the AlephOne
+# package (engine only) gets every plugin. Same rules as
+# tools/copy_extras_plugins.sh, which the Mac and Linux packaging use.
+function CopyExtrasPlugins() {
+	Param (
+		[string]$package_name
+	)
+
+	$scenario_packages = @{
+		"Marathon" = "Marathon";
+		"Marathon 2" = "Marathon2";
+		"Marathon Infinity" = "MarathonInfinity"
+	}
+
+	$plugins_source = Join-Path -Path $root_directory -ChildPath "/Extras/Plugins"
+	if(!(Test-Path -Path $plugins_source -PathType Container)) {
+		return
+	}
+
+	$copied = 0
+	foreach($plugin in Get-ChildItem -Path $plugins_source -Directory) {
+		$manifest = Join-Path -Path $plugin.FullName -ChildPath "Plugin.xml"
+		if(!(Test-Path -Path $manifest -PathType Leaf)) {
+			Write-Error "Plugin $($plugin.Name) has no Plugin.xml" -ErrorAction Stop
+		}
+
+		$scenarios = @(([xml](Get-Content -Path $manifest -Raw)).plugin.scenario | Where-Object { $_ } | ForEach-Object { $_.name })
+		$wanted = ($package_name -eq "AlephOne") -or ($scenarios.Count -eq 0)
+		foreach($scenario in $scenarios) {
+			if(!$scenario_packages.ContainsKey($scenario)) {
+				Write-Error "Plugin $($plugin.Name) targets unknown scenario '${scenario}'" -ErrorAction Stop
+			}
+			if($scenario_packages[$scenario] -eq $package_name) {
+				$wanted = $true
+			}
+		}
+		if(!$wanted) {
+			continue
+		}
+
+		$destination = Join-Path -Path $output_package_folder -ChildPath "/Extras/Plugins"
+		if(!(Test-Path -Path $destination)) {
+			New-Item -Path $destination -ItemType Directory -ErrorAction Stop | Out-Null
+		}
+		Copy-Item $plugin.FullName -Destination $destination -Recurse -Exclude ($array_exclude_copy + '__pycache__') -ErrorAction Stop
+		if(!(Test-Path -Path (Join-Path -Path $destination -ChildPath "$($plugin.Name)/Plugin.xml"))) {
+			Write-Error "Plugin $($plugin.Name) did not arrive in ${destination}" -ErrorAction Stop
+		}
+		Write-Host "Added plugin $($plugin.Name) to ${package_name}"
+		$copied++
+	}
+	Write-Host "${copied} plugin(s) in ${package_name}"
+}
+
 function Package {
 	Param (
 		[string]$package_name
@@ -51,6 +108,7 @@ function Package {
 	}
 	
 	GetCommonFiles -ErrorAction Stop
+	CopyExtrasPlugins -package_name $package_name
 	
 	if($package_name -eq "Release") {
 		Copy-Item (Join-Path -Path $root_directory -ChildPath "/data/Transparent_Sprites.mml") -Destination (Join-Path -Path $output_package_folder -ChildPath "/Extras")

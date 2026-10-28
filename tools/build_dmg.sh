@@ -57,6 +57,9 @@ make_dmg()
         cp "$SRCROOT/../data/Carnage_Messages.mml" "$extdir"
         cp "$SRCROOT/../examples/lua/Cheats.lua" "$extdir"
     fi
+
+    # optional plugins for this game, into Extras/Plugins
+    "$SRCROOT/../tools/copy_extras_plugins.sh" "$SRCROOT/.." "$imgname" "$diskdir" || exit 1
     
     version=`grep '^#define A1_DATE_VERSION' "$SRCROOT/../Source_Files/Misc/alephversion.h" | sed -e 's/\(.*\"\)\(.*\)\(\"\)/\2/g'`
     imgfile="$TARGET_BUILD_DIR/$imgname-$version-Mac.dmg"

@@ -1,6 +1,6 @@
 ## Process this file with automake to produce Makefile.in 
 
-EXTRA_DIST = headertest/README
+EXTRA_DIST = headertest/README copy_extras_plugins.sh
 
 # these are currently broken
 # noinst_PROGRAMS = single2forks forks2single dumprsrcmap dumpwad

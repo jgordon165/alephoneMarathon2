@@ -18,6 +18,7 @@ EXTRA_DIST = \
 	docs/MML.html                                                               \
 	docs/README.txt                                                             \
 	examples/lua/Cheats.lua                                                     \
+	Extras/Plugins                                                              \
 	flatpak/alephone.desktop                                                    \
 	flatpak/alephone.png                                                        \
 	flatpak/marathon-infinity.desktop                                           \
@@ -127,6 +128,13 @@ mkdir -p "$(2)"
 tar -c --exclude='.svn' --exclude='.git' --exclude='Makefile' --exclude='Makefile.*' -C "$(1)" . | tar -x -C "$(2)"
 endef
 
+# Optional plugins from Extras/Plugins into a package's Extras/Plugins,
+# picked by each plugin's <scenario> tags: $(1) = AlephOne, Marathon,
+# Marathon2 or MarathonInfinity, $(2) = package directory
+define cp_extras_plugins
+$(SHELL) $(srcdir)/tools/copy_extras_plugins.sh $(srcdir) $(1) "$(2)"
+endef
+
 define windist_common
 unix2dos -n $(srcdir)/THANKS "$(1)/THANKS.txt"
 unix2dos -n $(srcdir)/COPYING "$(1)/COPYING.txt"
@@ -153,6 +161,7 @@ $(WINZIP): Source_Files/AlephOne.exe
 	cp $(srcdir)/data/Transparent_Sprites.mml $(WINDISTDIR)/Extras
 	cp $(srcdir)/data/Transparent_Liquids.mml $(WINDISTDIR)/Extras
 	$(call cp_no_svn,$(srcdir)/data/default_theme,$(WINDISTDIR)/Plugins/Default_Theme)
+	$(call cp_extras_plugins,AlephOne,$(WINDISTDIR))
 	rm -f $(WINZIP)
 	zip -r $(WINZIP) $(WINDISTDIR)
 	rm -rf "$(WINDISTDIR)"
@@ -161,6 +170,7 @@ WINUPDIR_M1=Marathon-$(VERSION)
 $(M1_WINUP): Source_Files/Marathon.exe
 	mkdir "$(WINUPDIR_M1)"
 	$(call windist_common,$(WINUPDIR_M1))
+	$(call cp_extras_plugins,Marathon,$(WINUPDIR_M1))
 	cp Source_Files/Marathon.exe "$(WINUPDIR_M1)/Marathon.exe"
 	rm -f $(M1_WINUP)
 	zip -r $(M1_WINUP) "$(WINUPDIR_M1)"
@@ -170,6 +180,7 @@ WINDISTDIR_M1=Marathon
 $(M1_WINZIP): Source_Files/Marathon.exe
 	mkdir "$(WINDISTDIR_M1)"
 	$(call windist_common,$(WINDISTDIR_M1))
+	$(call cp_extras_plugins,Marathon,$(WINDISTDIR_M1))
 	$(call cp_no_svn,$(srcdir)/data/Scenarios/Marathon,$(WINDISTDIR_M1))
 	cp Source_Files/Marathon.exe "$(WINDISTDIR_M1)/Marathon.exe"
 	rm -f $(M1_WINZIP)
@@ -180,6 +191,7 @@ WINUPDIR_M2=Marathon2-$(VERSION)
 $(M2_WINUP): Source_Files/Marathon2.exe
 	mkdir "$(WINUPDIR_M2)"
 	$(call windist_common,$(WINUPDIR_M2))
+	$(call cp_extras_plugins,Marathon2,$(WINUPDIR_M2))
 	cp Source_Files/Marathon2.exe "$(WINUPDIR_M2)/Marathon 2.exe"
 	rm -f $(M2_WINUP)
 	zip -r $(M2_WINUP) "$(WINUPDIR_M2)"
@@ -189,6 +201,7 @@ WINDISTDIR_M2=Marathon 2
 $(M2_WINZIP): Source_Files/Marathon2.exe
 	mkdir "$(WINDISTDIR_M2)"
 	$(call windist_common,$(WINDISTDIR_M2))
+	$(call cp_extras_plugins,Marathon2,$(WINDISTDIR_M2))
 	$(call cp_no_svn,$(srcdir)/data/Scenarios/Marathon 2,$(WINDISTDIR_M2))
 	cp Source_Files/Marathon2.exe "$(WINDISTDIR_M2)/Marathon 2.exe"
 	rm -f $(M2_WINZIP)
@@ -200,6 +213,7 @@ WINUPDIR_MINF=MarathonInfinity-$(VERSION)
 $(MINF_WINUP): Source_Files/MarathonInfinity.exe
 	mkdir "$(WINUPDIR_MINF)"
 	$(call windist_common,$(WINUPDIR_MINF))
+	$(call cp_extras_plugins,MarathonInfinity,$(WINUPDIR_MINF))
 	cp Source_Files/MarathonInfinity.exe "$(WINUPDIR_MINF)/Marathon Infinity.exe"
 	rm -f $(MINF_WINUP)
 	zip -r $(MINF_WINUP) "$(WINUPDIR_MINF)"
@@ -209,6 +223,7 @@ WINDISTDIR_MINF=Marathon Infinity
 $(MINF_WINZIP): Source_Files/Marathon2.exe
 	mkdir "$(WINDISTDIR_MINF)"
 	$(call windist_common,$(WINDISTDIR_MINF))
+	$(call cp_extras_plugins,MarathonInfinity,$(WINDISTDIR_MINF))
 	$(call cp_no_svn,$(srcdir)/data/Scenarios/Marathon Infinity,$(WINDISTDIR_MINF))
 	cp Source_Files/MarathonInfinity.exe "$(WINDISTDIR_MINF)/Marathon Infinity.exe"
 	rm -f $(MINF_WINZIP)
@@ -230,6 +245,7 @@ DATADISTDIR_M1=Marathon
 $(M1_DATAZIP):
 	mkdir "$(DATADISTDIR_M1)"
 	$(call cp_no_svn,$(srcdir)/data/Scenarios/Marathon,$(DATADISTDIR_M1))
+	$(call cp_extras_plugins,Marathon,$(DATADISTDIR_M1))
 	rm -f $(M1_DATAZIP)
 	zip -r $(M1_DATAZIP) "$(DATADISTDIR_M1)"
 	rm -rf "$(DATADISTDIR_M1)"
@@ -238,6 +254,7 @@ DATADISTDIR_M2=Marathon 2
 $(M2_DATAZIP):
 	mkdir "$(DATADISTDIR_M2)"
 	$(call cp_no_svn,$(srcdir)/data/Scenarios/Marathon 2,$(DATADISTDIR_M2))
+	$(call cp_extras_plugins,Marathon2,$(DATADISTDIR_M2))
 	rm -f $(M2_DATAZIP)
 	zip -r $(M2_DATAZIP) "$(DATADISTDIR_M2)"
 	rm -rf "$(DATADISTDIR_M2)"
@@ -246,6 +263,7 @@ DATADISTDIR_MINF=Marathon Infinity
 $(MINF_DATAZIP):
 	mkdir "$(DATADISTDIR_MINF)"
 	$(call cp_no_svn,$(srcdir)/data/Scenarios/Marathon Infinity,$(DATADISTDIR_MINF))
+	$(call cp_extras_plugins,MarathonInfinity,$(DATADISTDIR_MINF))
 	rm -f $(MINF_DATAZIP)
 	zip -r $(MINF_DATAZIP) "$(DATADISTDIR_MINF)"
 	rm -rf "$(DATADISTDIR_MINF)"
